@@ -23,22 +23,19 @@
     "build": "npm run clean && npm run compile",
     "clean": "rm -rf ./dist",
     "compile": "tsc",
-    "prepare": "npm run build",
     "dev": "tsc --watch"
   },
   "main": "dist/index.js",
   "devDependencies": {
-    "@nestjs/bull": "^0.6.2",
-    "@nestjs/common": "^9.2.1",
-    "@nestjs/core": "^9.2.1",
-    "@types/bull": "^4.10.0",
-    "bull": "^4.10.2",
     "typescript": "^4.9.4"
   },
   "dependencies": {
     "@bull-monitor/express": "^5.1.0"
   },
   "peerDependencies": {
-    "@nestjs/bull": "^0.6.2"
+    "@nestjs/bull": "^0.6.2",
+    "@nestjs/common": "^9.2.1",
+    "bull": "^4.10.2",
+    "reflect-metadata": "^0.1.13"
   }
 }

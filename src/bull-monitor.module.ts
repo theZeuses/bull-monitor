@@ -3,7 +3,7 @@ import { DynamicModule, Inject, MiddlewareConsumer, Module, NestModule } from "@
 import { BullMonitorExpressService } from "./bull-monitor.service";
 import { Queue } from "bull";
 import { BULL_MONITOR_OPTIONS_TOKEN, BULL_MONITOR_TOKEN } from "./bull-monitor.constant";
-import { Options } from "./bull-monitor.interface";
+import { AsyncOptions, Options } from "./bull-monitor.interface";
 
 @Module({})
 export class BullMonitorModule implements NestModule {
@@ -21,22 +21,63 @@ export class BullMonitorModule implements NestModule {
 
     static register(options: Options): DynamicModule {
         const imports = [];
+        const { queues, ...restConfig } = options.config;
 
-        options.config.queues.map(queue => {
-            imports.push(BullModule.registerQueue({ name: (typeof queue == "string" ? queue : queue.name) }));
+        const configuredQueues = {};
+        queues.map(q => {
+            imports.push(BullModule.registerQueue(q));
+            configuredQueues[q.name] = q;
         });
 
-        const { queues, ...restConfig } = options.config;
         return {
             module: BullMonitorModule,
-            imports,
+            imports: [...imports],
             providers: [
                 {
                     provide: BULL_MONITOR_TOKEN,
                     useFactory: (...injectedQueues: Array<Queue>) => {
-                        return new BullMonitorExpressService(injectedQueues, restConfig);
+                        return new BullMonitorExpressService(injectedQueues.map(q => ({
+                            queue: q,
+                            config: {
+                                readonly: configuredQueues[q.name].readonly && true
+                            }
+                        })), restConfig);
                     },
-                    inject: [...queues.map(queue => getQueueToken((typeof queue == "string" ? queue : queue.name)))]
+                    inject: [...queues.map(q => getQueueToken(q.name))]
+                },
+                {
+                    provide: BULL_MONITOR_OPTIONS_TOKEN,
+                    useValue: options
+                }
+            ]
+        }
+    }
+
+    static registerAsync(options: AsyncOptions): DynamicModule {
+        const imports = [];
+        const { queues, ...restConfig } = options.config;
+
+        const configuredQueues = {};
+        queues.map(q => {
+            imports.push(BullModule.registerQueueAsync(q));
+            configuredQueues[q.name] = q;
+        });
+
+        return {
+            module: BullMonitorModule,
+            imports: [...imports],
+            providers: [
+                {
+                    provide: BULL_MONITOR_TOKEN,
+                    useFactory: (...injectedQueues: Array<Queue>) => {
+                        return new BullMonitorExpressService(injectedQueues.map(q => ({
+                            queue: q,
+                            config: {
+                                readonly: configuredQueues[q.name].readonly && true
+                            }
+                        })), restConfig);
+                    },
+                    inject: [...queues.map(q => getQueueToken(q.name))]
                 },
                 {
                     provide: BULL_MONITOR_OPTIONS_TOKEN,
