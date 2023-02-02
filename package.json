@@ -1,6 +1,6 @@
 {
   "name": "@thezeus/bull-monitor",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "a nestjs wrap over bull-monitor for express",
   "keywords": [
     "bull",
